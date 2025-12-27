@@ -1,27 +1,26 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 587,
-  secure: false,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const sendOtpEmail = async (email, otp) => {
-  await transporter.sendMail({
-    from: `"QuicKart" <${process.env.EMAIL_USER}>`,
-    to: email,
-    subject: "QuicKart Login OTP",
-    html: `
-      <h2>QuicKart Verification Code</h2>
-      <p>Your OTP is:</p>
-      <h1>${otp}</h1>
-      <p>This OTP is valid for 5 minutes.</p>
-    `,
-  });
+  try {
+    await resend.emails.send({
+      from: "QuicKart <onboarding@resend.dev>",
+      to: email,
+      subject: "QuicKart Login OTP",
+      html: `
+        <h2>QuicKart Verification Code</h2>
+        <p>Your OTP is:</p>
+        <h1>${otp}</h1>
+        <p>This OTP is valid for 5 minutes.</p>
+      `,
+    });
+
+    console.log("OTP email sent to", email);
+  } catch (error) {
+    console.error("Resend email error:", error);
+    throw new Error("Failed to send OTP email");
+  }
 };
 
 export default sendOtpEmail;
