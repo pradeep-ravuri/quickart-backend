@@ -1,39 +1,27 @@
 import jwt from "jsonwebtoken";
-import userModel from "../models/userModel.js";
 
 export const adminLogin = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const admin = await userModel.findOne({ email });
-
-    if (!admin || !admin.isAdmin) {
+    // check against ENV variables
+    if (
+      email !== process.env.ADMIN_EMAIL ||
+      password !== process.env.ADMIN_PASSWORD
+    ) {
       return res.status(401).json({
         success: false,
-        message: "Not authorized as admin",
+        message: "Invalid admin credentials",
       });
     }
 
-    if (admin.password !== password) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid credentials",
-      });
-    }
-
-    const token = jwt.sign(
-      { id: admin._id, role: "admin" },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
+    const token = jwt.sign({ role: "admin" }, process.env.JWT_SECRET, {
+      expiresIn: "7d",
+    });
 
     res.json({
       success: true,
       token,
-      admin: {
-        id: admin._id,
-        email: admin.email,
-      },
     });
   } catch (error) {
     res.status(500).json({
